@@ -1,5 +1,6 @@
 import math
 import matplotlib.pyplot as plt
+import ezdxf
 
 # rc : 定円の半径
 # rm : 動円の半径
@@ -9,7 +10,7 @@ import matplotlib.pyplot as plt
 
 def trochoid(rc, rm, rd):
   # 動円が定円の周りを何周するか
-  n = arg_check(rc, rm, rd)
+  n = check_arg(rc, rm, rd)
 
   # XY座標を入れとくヤツ
   point = []
@@ -36,17 +37,15 @@ def trochoid(rc, rm, rd):
   return point
 
 def save_and_visualize(data):
-  data_x = []
-  data_y = []
-  for i in range(len(data)):
-    data_x.append(data[i][0])
-    data_y.append(data[i][1])
-  plt.plot(data_x, data_y)
+
+  np.savetxt("hoge.csv", data, delimiter=",")
+  plt.plot(data[:, [0]], data[:, [1]])
+
   plt.axis("equal")
   plt.show()
 
 # 引数チェックして，OKなら動円が定円の周りを何周するか返す
-def arg_check(rc, rm, rd):
+def check_arg(rc, rm, rd):
   # 動円が定円の周りを何周するか
   n = rc / rm
 
@@ -72,13 +71,35 @@ def arg_check(rc, rm, rd):
   
   return n
 
+# 点列からスプライン補完でDXFを生成する
+def generate_dxf(data):
+  doc = ezdxf.new('R2000')
+  msp = doc.modelspace()
+
+  # 取りあえず最初の点を渡して初期化
+  fit_points = [(data[[0], [0]], data[[0], [1]], 0)]
+  spline = msp.add_spline(fit_points)
+
+  # スプラインに点列を追加
+  for i in range(1, len(data)-1):
+    spline.fit_points.append((data[[i], [0]], data[[i], [1]], 0))
+  
+  # 曲線を閉じる
+  spline.fit_points.append((data[[0], [0]], data[[0], [1]], 0))
+  
+  # 書き出し
+  doc.saveas("data.dxf")
+
+
+
 def main():
-  dc = input("基準円直径")
-  z = input("歯数")
+  dc = input("基準円直径[mm]:")
+  z = input("歯数:")
   rc = int(dc) / 2 # 定円の半径
   rm = rc / (int(z) * 2) # 動円の半径
   zahyo = trochoid(rc, rm, rm)
   save_and_visualize(zahyo)
+  generate_dxf(zahyo)
 
 if __name__ == '__main__':
   main()
