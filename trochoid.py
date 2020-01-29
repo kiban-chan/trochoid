@@ -1,4 +1,4 @@
-import numpy as np
+import math
 import matplotlib.pyplot as plt
 import ezdxf
 
@@ -13,30 +13,34 @@ def trochoid(rc, rm, rd):
   n = check_arg(rc, rm, rd)
 
   # XY座標を入れとくヤツ
-  point = np.empty((0,2), float)
+  point = []
 
   # 動円が一回転したときの角度 [rad]
-  angle_of_a_loop = 2 * np.pi / n
+  angle_of_a_loop = 2 * math.pi / n
 
 
   for rot in range(int(n)):
-    if (rot % 2) == 0: # 外トロコイド
-      for theta in np.arange(angle_of_a_loop * rot, angle_of_a_loop * (rot + 1), 0.01):
-        x = (rc + rm) * np.cos(theta) - rd * np.cos((rc + rm) * theta / rm)
-        y = (rc + rm) * np.sin(theta) - rd * np.sin((rc + rm) * theta / rm)
-        point = np.append(point, np.array([[x, y]]), axis=0)
-    #elif (rot % 2) != 0: # 内トロコイド
-    else:
-      for theta in np.arange(angle_of_a_loop * rot, angle_of_a_loop * (rot + 1), 0.01):
-        x = (rc - rm) * np.cos(theta) + rd * np.cos((rc - rm) * theta / rm)
-        y = (rc - rm) * np.sin(theta) - rd * np.sin((rc - rm) * theta / rm)
-        point = np.append(point, np.array([[x, y]]), axis=0)
+    angle_s_100 = int(angle_of_a_loop * rot * 100)
+    angle_e_100 = int(angle_of_a_loop * (rot + 1) * 100)
 
+    if (rot % 2) == 0: # 外トロコイド
+      for theta in [i / 100 for i in range(angle_s_100, angle_e_100, 1)]:
+        x = (rc + rm) * math.cos(theta) - rd * math.cos((rc + rm) * theta / rm)
+        y = (rc + rm) * math.sin(theta) - rd * math.sin((rc + rm) * theta / rm)
+        point.append([x, y])
+    else: # 内トロコイド
+      for theta in [i / 100 for i in range(angle_s_100, angle_e_100, 1)]:
+        x = (rc - rm) * math.cos(theta) + rd * math.cos((rc - rm) * theta / rm)
+        y = (rc - rm) * math.sin(theta) - rd * math.sin((rc - rm) * theta / rm)
+        point.append([x, y])
+  print(len(point))
   return point
 
 def save_and_visualize(data):
+
   np.savetxt("hoge.csv", data, delimiter=",")
   plt.plot(data[:, [0]], data[:, [1]])
+
   plt.axis("equal")
   plt.show()
 
